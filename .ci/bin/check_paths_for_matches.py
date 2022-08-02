@@ -23,8 +23,10 @@ def check_paths_for_matches(pattern, git_commit, git_previous_commit):
     changes.
     """
     # Handle case where GIT_PREVIOUS_COMMIT isn't set (e.g. the first build),
-    if not git_previous_commit:
-        command = [
+    command = (
+        ["git", "diff", "--name-only", git_previous_commit, git_commit]
+        if git_previous_commit
+        else [
             "git",
             "diff-tree",
             "-m",
@@ -33,8 +35,7 @@ def check_paths_for_matches(pattern, git_commit, git_previous_commit):
             "-r",
             git_commit,
         ]
-    else:
-        command = ["git", "diff", "--name-only", git_previous_commit, git_commit]
+    )
 
     # Run the command and populate paths.
     completed_process = subprocess.run(
@@ -44,9 +45,9 @@ def check_paths_for_matches(pattern, git_commit, git_previous_commit):
 
     # Look for any matches of pattern -> path.
     possible_matches = [(path, pattern.match(path)) for path in paths]
-    if any([match for path, match in possible_matches]):
+    if any(match for path, match in possible_matches):
         if debug:
-            print("matching change(s) found for {}".format(git_commit))
+            print(f"matching change(s) found for {git_commit}")
             for path, match in possible_matches:
                 if match:
                     print(path)
@@ -55,7 +56,7 @@ def check_paths_for_matches(pattern, git_commit, git_previous_commit):
         exit(0)
     else:
         if debug:
-            print("no matching change(s) found for {}".format(git_commit))
+            print(f"no matching change(s) found for {git_commit}")
         exit(1)
 
 
